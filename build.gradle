@@ -45,62 +45,43 @@ dependencies {
 
 
 task recycle(){
-    def stopContainer = exec{
-        ignoreExitValue = true
-        executable "docker"
-        args "stop", "${containerName}"
-    }
 
-    def removeContainer = exec{
-        ignoreExitValue = true
-        executable "docker"
-        args "rm", "${containerName}"
-    }
-
-    def removeImage = exec{
-        ignoreExitValue = true
-        executable "docker"
-        args "rmi", "${dockerRepo}/${containerName}:${imageId}"
-    }
-
-    def pruneVolumes = exec{
-        ignoreExitValue = true
-        executable "docker"
-        args "volume", "prune"
-    }
     doLast{
-
-        //Stops Docker Containers
-        stopContainer
+        //Stops Docker Container
+        def stopContainer = exec{
+            ignoreExitValue = true
+            executable "docker"
+            args "stop", "${containerName}"
+        }
         if(stopContainer.getExitValue()==0){
-            print "Container Stopped.\n"
+            print "Container Stopped.\n\n"
         }else{
-            print "No Container To Stop.\n"
+            print "No Container To Stop.\n\n"
         }
 
-        //Removes Docker Containers
-        removeContainer
+        //Removes Docker Container
+        def removeContainer = exec{
+            ignoreExitValue = true
+            executable "docker"
+            args "rm", "${containerName}"
+        }
         if(removeContainer.getExitValue()==0){
-            print "Container Removed.\n"
+            print "Container Removed.\n\n"
         }else{
-            print "No Container To Remove.\n"
+            print "No Container To Remove.\n\n"
         }
 
-        //Remove Docker Images
-        removeImage
+        //Removes Docker Image
+        def removeImage = exec{
+            ignoreExitValue = true
+            executable "docker"
+            args "rmi", "${dockerRepo}/${containerName}:${imageId}"
+        }
         if(removeImage.getExitValue()==0){
-            print "Image Removed.\n"
+            print "Image Removed.\n\n"
         }else{
-            print "No Image To Remove.\n"
+            print "No Image To Remove.\n\n"
         }
-
-        //Removes Unused Volumes
-        if(pruneVolumes.getExitValue()==0){
-            println "Unused volumes have been pruned."
-        }else{
-            print "No unused volumes to prune."
-        }
-
     }
 }
 
@@ -118,12 +99,13 @@ task image(type: Docker, dependsOn: build) {
     }
 }
 
-task run() {
-    def runContainer = exec {
-        executable "docker"
-        args "run", "-d", "-p", "8080:8080", "--name", "${containerName}","-v","${volumes}/conf/:/tmp","${dockerRepo}/${containerName}:${imageId}"
-    }
+
+task start(){
     doLast{
-        runContainer
+        //Runs Docker Containers
+        def runContainer = exec{
+        executable "docker"
+            args "run", "-d", "-p", "8080:8080", "--name", "${containerName}","-v","${volumes}/conf/:/tmp","${dockerRepo}/${containerName}:${imageId}"
+        }
     }
 }
