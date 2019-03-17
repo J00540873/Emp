@@ -42,10 +42,8 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
-
-
+//Removes Docker Image
 task recycle(){
-
     doLast{
         //Stops Docker Container
         def stopContainer = exec{
@@ -85,7 +83,7 @@ task recycle(){
     }
 }
 
-
+//Builds Docker Image
 task image(type: Docker, dependsOn: build) {
     dockerfile = file('src/main/docker/Dockerfile')
     applicationName = "${containerName}"
@@ -100,11 +98,21 @@ task image(type: Docker, dependsOn: build) {
 }
 
 
+//Pushes Docker Image
+task push(){
+    doLast{
+        exec{
+            executable "docker"
+            args "push", "${dockerRepo}/${containerName}:${imageId}"
+        }
+    }
+}
+
+//Runs Docker Container
 task start(){
     doLast{
-        //Runs Docker Containers
-        def runContainer = exec{
-        executable "docker"
+        exec{
+            executable "docker"
             args "run", "-d", "-p", "8080:8080", "--name", "${containerName}","-v","${volumes}/conf/:/tmp","${dockerRepo}/${containerName}:${imageId}"
         }
     }
