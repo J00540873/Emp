@@ -2,8 +2,11 @@ buildscript {
     ext {
         springBootVersion = '2.1.2.RELEASE'
         gradleDockerVersion = '1.2'
-        dockerRepo = ''
+
+        dockerRepo = 'hello'
+        containerName = 'employee'
         imageId = '0.0.1'
+        volumes = "${System.getProperty( 'user.dir' )}/src/main/docker/volumes"
 
     }
     repositories {
@@ -41,16 +44,86 @@ dependencies {
 
 
 
-task buildDocker(type: Docker, dependsOn: build) {
-    applicationName = jar.baseName.toLowerCase()
+task recycle(){
+    def stopContainer = exec{
+        ignoreExitValue = true
+        executable "docker"
+        args "stop", "${containerName}"
+    }
+
+    def removeContainer = exec{
+        ignoreExitValue = true
+        executable "docker"
+        args "rm", "${containerName}"
+    }
+
+    def removeImage = exec{
+        ignoreExitValue = true
+        executable "docker"
+        args "rmi", "${dockerRepo}/${containerName}:${imageId}"
+    }
+
+    def pruneVolumes = exec{
+        ignoreExitValue = true
+        executable "docker"
+        args "volume", "prune"
+    }
+    doLast{
+
+        //Stops Docker Containers
+        stopContainer
+        if(stopContainer.getExitValue()==0){
+            print "Container Stopped.\n"
+        }else{
+            print "No Container To Stop.\n"
+        }
+
+        //Removes Docker Containers
+        removeContainer
+        if(removeContainer.getExitValue()==0){
+            print "Container Removed.\n"
+        }else{
+            print "No Container To Remove.\n"
+        }
+
+        //Remove Docker Images
+        removeImage
+        if(removeImage.getExitValue()==0){
+            print "Image Removed.\n"
+        }else{
+            print "No Image To Remove.\n"
+        }
+
+        //Removes Unused Volumes
+        if(pruneVolumes.getExitValue()==0){
+            println "Unused volumes have been pruned."
+        }else{
+            print "No unused volumes to prune."
+        }
+
+    }
+}
+
+
+task image(type: Docker, dependsOn: build) {
     dockerfile = file('src/main/docker/Dockerfile')
-    tag = "${dockerRepo}"+ applicationName
+    applicationName = "${containerName}"
+    tag = "${dockerRepo}/"+ applicationName
     tagVersion = "${imageId}"
     doFirst {
         copy {
             from jar
             into stageDir
-
         }
+    }
+}
+
+task run() {
+    def runContainer = exec {
+        executable "docker"
+        args "run", "-d", "-p", "8080:8080", "--name", "${containerName}","-v","${volumes}/conf/:/tmp","${dockerRepo}/${containerName}:${imageId}"
+    }
+    doLast{
+        runContainer
     }
 }
