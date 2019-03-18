@@ -113,7 +113,8 @@ task start(){
     doLast{
         exec{
             executable "docker"
-            args "run", "-d", "-p", "8080:8080", "--name", "${containerName}","-v","${volumes}/conf/:/tmp","${dockerRepo}/${containerName}:${imageId}"
+            args "run", "-d", "-p", "8080:8080", "--name", "${containerName}","--net","wild-west",
+                    "-v","${volumes}/conf/:/tmp","${dockerRepo}/${containerName}:${imageId}"
 
         }
         exec{
@@ -123,26 +124,10 @@ task start(){
             ext.ip = {
                 standardOutput.toString()
             }
+
         }
-
-    }
-}
-
-//Under construction update ip
-task writeHash(dependsOn: start) {
-    //def result = file("${buildDir}/ip.txt")
-    //outputs.file result
-
-    doLast {
-        if (!buildDir.exists()) {
-            buildDir.mkdirs()
-        }
-
         def ip = tasks.start.ip()
-        println ip
-        //result.write(ip)
-        exec {
-            commandLine('echo', 'ip:', "$ip")
-        }
+        print ip
+
     }
 }
