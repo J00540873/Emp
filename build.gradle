@@ -1,3 +1,5 @@
+import java.util.regex.Matcher
+
 buildscript {
     ext {
         springBootVersion = '2.1.2.RELEASE'
@@ -76,9 +78,9 @@ task recycle(){
             args "rmi", "${dockerRepo}/${containerName}:${imageId}"
         }
         if(removeImage.getExitValue()==0){
-            print "Image Removed.\n\n"
+            print "Image Removed.\n"
         }else{
-            print "No Image To Remove.\n\n"
+            print "No Image To Remove.\n"
         }
     }
 }
@@ -113,8 +115,14 @@ task start(){
     doLast{
         exec{
             executable "docker"
-            args "run", "-d", "-p", "8080:8080", "--name", "${containerName}","--net","wild-west",
-                    "-v","${volumes}/conf/:/tmp","${dockerRepo}/${containerName}:${imageId}"
+            args "run",
+                 "-d",
+                 "-p", "8080:8080",
+                 "--name", "${containerName}",
+                 "--net","wild-west",
+                 //"-v","${volumes}/conf/:/tmp",
+                 "-v","/tmp:/tmp",
+                 "${dockerRepo}/${containerName}:${imageId}"
 
         }
         exec{
@@ -125,9 +133,11 @@ task start(){
                 standardOutput.toString()
             }
 
+
         }
-        def ip = tasks.start.ip()
-        print ip
+        def ip = tasks.start.ip().replace("'", "").trim()
+        def host = "${ip} ${containerName}"
+        print "${host}"
 
     }
 }
