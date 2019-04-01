@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-pod
+  labels:
+    app: app-node
+    function: back-end
+
+spec:
+  container:
+    - name: employee
+      image: hello/world:0.0.1
